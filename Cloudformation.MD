@@ -1,6 +1,23 @@
+### Subnet Calculator https://tidalmigrations.com/subnet-builder/
+------
+
+### Convert the template to yaml file
 
 ```
-aws cloudformation --profile ax-test create-stack --stack-name troposphere-vpc --template-body file://vpc.yaml 
+python src/vpc.py
+```
+
+### Create Stack
+```
+aws cloudformation --profile ax-test create-stack --stack-name Troposphere-vpc --template-body file://vpc.yaml
+``` 
  
-aws cloudformation --profile ax-test update-stack --stack-name troposphere-vpc --template-body file://vpc.yaml
+### Update Stack
+```
+aws cloudformation --profile ax-test update-stack --stack-name Troposphere-vpc --template-body file://vpc.yaml
+```
+
+### Delete Stack
+```
+aws cloudformation --profile ax-test update-stack --stack-name Troposphere-vpc
 ```

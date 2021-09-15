@@ -1,4 +1,4 @@
-# Troposphere
+# Troposphere - library to create AWS Cloudformation Templates
 
 ### Solution should be written in Python3 and use the Troposphere library which is used to generate Cloudformation templates. 
 -----------------------------
