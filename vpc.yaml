@@ -17,10 +17,50 @@ Parameters:
     Description: AWS Environment Type
     Type: String
 Resources:
-  VPC:
+  AttachGateway:
     Properties:
-      CidrBlock: 10.10.0.0/16
+      InternetGatewayId: !Ref 'InternetGateway'
+      VpcId: !Ref 'VPC'
+    Type: AWS::EC2::VPCGatewayAttachment
+  InternetGateway:
+    Properties:
       Tags:
         - Key: Application
           Value: !Ref 'AWS::StackId'
+        - Key: Name
+          Value: !Join
+            - ''
+            - - !Ref 'AWSenv'
+              - -IG
+    Type: AWS::EC2::InternetGateway
+  MainRouteTable:
+    Properties:
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackId'
+        - Key: Name
+          Value: !Join
+            - ''
+            - - !Ref 'AWSenv'
+              - -Public-RT
+      VpcId: !Ref 'VPC'
+    Type: AWS::EC2::RouteTable
+  Route:
+    DependsOn: AttachGateway
+    Properties:
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId: !Ref 'InternetGateway'
+      RouteTableId: !Ref 'MainRouteTable'
+    Type: AWS::EC2::Route
+  VPC:
+    Properties:
+      CidrBlock: !FindInMap
+        - AWSenvtoVPC
+        - !Ref 'AWSenv'
+        - vpc
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackId'
+        - Key: Name
+          Value: !Ref 'AWSenv'
     Type: AWS::EC2::VPC

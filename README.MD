@@ -1,6 +1,6 @@
 # Troposphere
 
-### Solution should be written in Python 3 and use the Troposphere library which is used to generate Cloudformation templates. 
+### Solution should be written in Python3 and use the Troposphere library which is used to generate Cloudformation templates. 
 -----------------------------
 
 The Growth team has created 3 new AWS accounts (Growth-Dev, Growth-Stage, Growth-Prod)and would like you to develop a solution to create Cloudformation templates that set-up some
