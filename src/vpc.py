@@ -35,7 +35,7 @@ input_env = t.add_parameter(
         "AWSenv",
         Type = "String",
         Description = "AWS Environment Type",
-        Default = "dev",
+        Default = "Growth-Dev",
         AllowedValues = [
             "Growth-Dev",
             "Growth-Stage",
@@ -68,7 +68,7 @@ VPC = t.add_resource(
 )
 
 # Finally, write the template to a file
-with open('vpc.yaml', 'w') as f:
+with open('./vpc.yaml', 'w') as f:
     f.write(t.to_yaml())
 ##
 ## aws cloudformation --profile ax-test create-stack troposphere-vpc --template-body file://vpc.yaml 
