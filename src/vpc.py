@@ -1,3 +1,4 @@
+from typing import Type
 import troposphere.ec2 as ec2
 from troposphere import (
     FindInMap,
@@ -8,6 +9,7 @@ from troposphere import (
     Template,
     Select,
     GetAZs,
+    GetAtt,
 )
 
 from troposphere.ec2 import (
@@ -28,7 +30,7 @@ t = Template()
 t.set_description("AWS Cloudformation For VPC Template")
 
 # User Input
-# input_pub_az_amount = int(input('In how many different AZs you want to create PUBLIC subnets? (max. 3): '))
+input_az_amount = int(input('In how many different AZs you want to create subnets? (max. 3): '))
 # #input_pri_az_amount = int(input('In how many different AZs you want to create PRIVATE subnets? (max. 3): '))
 
 input_env_param = t.add_parameter(
@@ -117,14 +119,14 @@ t.add_mapping(
     }
 )
 
-ref_stack_id = Ref("AWS::StackId")
+ref_stack_id = Ref('AWS::StackId')
 ref_stack_name = Ref('AWS::StackName')
 
 # Create VPC
 VPC = t.add_resource(
     VPC(
         'VPC', 
-        CidrBlock = FindInMap("AWSenvtoVPC", Ref(input_env_param), "vpc"),
+        CidrBlock = FindInMap('AWSenvtoVPC', Ref(input_env_param), 'vpc'),
         Tags = Tags(
             Application = ref_stack_id,
             Name = Ref(input_env_param)
@@ -198,7 +200,7 @@ protectedRouteTable = t.add_resource(RouteTable(
 )
 
 # Create Public Subnet
-for i in range(3):
+for i in range(input_az_amount):
     public_subnet = t.add_resource(Subnet(
         'PublicSubnet'+ str(i+1),
         VpcId=Ref(VPC),
@@ -207,19 +209,19 @@ for i in range(3):
         Tags = Tags(
                 Application = ref_stack_id,
                 Name = Join("",[Ref(input_env_param),("-PublicSubnet"+ str(i+1))])
-                ) 
-       )
+        ) 
+    )
 )
     
     public_subnet_attachment = t.add_resource(SubnetRouteTableAssociation(
         'SubnetPublicToRouteTableAttachment' + str(i+1),
         SubnetId = Ref(public_subnet),
         RouteTableId = Ref(mainRouteTable),
-       )
+    )
 )
 
 # Create Private Subnet
-for i in range(3):
+for i in range(input_az_amount):
     private_subnet = t.add_resource(Subnet(
         'privateSubnet'+ str(i+1),
         VpcId=Ref(VPC),
@@ -228,19 +230,19 @@ for i in range(3):
         Tags = Tags(
                 Application = ref_stack_id,
                 Name = Join("",[Ref(input_env_param),("-pvtSubnet"+ str(i+1))])
-                ) 
-       )
+        ) 
+    )
 )
     
     private_subnet_attachment = t.add_resource(SubnetRouteTableAssociation(
         'SubnetprivateToRouteTableAttachment' + str(i+1),
         SubnetId = Ref(private_subnet),
         RouteTableId = Ref(privateRouteTable),
-       )
+    )
 )
 
 # Create protected Subnet
-for i in range(3):
+for i in range(input_az_amount):
     protected_subnet = t.add_resource(Subnet(
         'protectedSubnet'+ str(i+1),
         VpcId=Ref(VPC),
@@ -249,15 +251,40 @@ for i in range(3):
         Tags = Tags(
                 Application = ref_stack_id,
                 Name = Join("",[Ref(input_env_param),("-protectedSubnet"+ str(i+1))])
-                ) 
-       )
+        ) 
+    )
 )
     
     protected_subnet_attachment = t.add_resource(SubnetRouteTableAssociation(
         'SubnetprotectedToRouteTableAttachment' + str(i+1),
         SubnetId = Ref(protected_subnet),
         RouteTableId = Ref(protectedRouteTable),
-       )
+    )
+)
+
+# Create NAT EIP
+for i in range(input_az_amount):
+    nat_eip = t.add_resource(ec2.EIP(
+        'EIP' + str(i+1),
+        Domain="vpc",
+        Tags=Tags(
+            Application = ref_stack_id,
+            Name = Join("",[Ref(input_env_param),("-NatGW-EIP-"+ str(i+1))])
+        )
+    )
+)
+
+# Create NAT Gateway for Protected Subnet
+for i in range(input_az_amount):
+    nat_gateway = t.add_resource(ec2.NatGateway(
+        'natgatway'+ str(i+1),
+        AllocationId = GetAtt(nat_eip,'AllocationId'),
+        SubnetId = Ref(protected_subnet),
+        Tags = Tags(
+            Application = ref_stack_id,
+            Name = Join("",[Ref(input_env_param),("-NatGW-"+ str(i+1))])
+        )
+    )
 )
 
 
