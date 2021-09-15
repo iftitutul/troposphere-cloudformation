@@ -120,7 +120,7 @@ Resources:
               - -Private-RT
       VpcId: !Ref 'VPC'
     Type: AWS::EC2::RouteTable
-  ProtectedRouteTable:
+  ProtectedRouteTable1:
     Properties:
       Tags:
         - Key: Application
@@ -129,7 +129,19 @@ Resources:
           Value: !Join
             - ''
             - - !Ref 'AWSenv'
-              - -Protected-RT
+              - -Protected-RT1
+      VpcId: !Ref 'VPC'
+    Type: AWS::EC2::RouteTable
+  ProtectedRouteTable2:
+    Properties:
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackId'
+        - Key: Name
+          Value: !Join
+            - ''
+            - - !Ref 'AWSenv'
+              - -Protected-RT2
       VpcId: !Ref 'VPC'
     Type: AWS::EC2::RouteTable
   PublicSubnet1:
@@ -201,13 +213,25 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
   SubnetprotectedToRouteTableAttachment1:
     Properties:
-      RouteTableId: !Ref 'ProtectedRouteTable'
-      SubnetId: !Ref 'protectedSubnet1'
+      RouteTableId: !Join
+        - ''
+        - - !Ref 'ProtectedRouteTable2'
+          - '0'
+      SubnetId: !Join
+        - ''
+        - - !Ref 'protectedSubnet1'
+          - '0'
     Type: AWS::EC2::SubnetRouteTableAssociation
   SubnetprotectedToRouteTableAttachment2:
     Properties:
-      RouteTableId: !Ref 'ProtectedRouteTable'
-      SubnetId: !Ref 'protectedSubnet2'
+      RouteTableId: !Join
+        - ''
+        - - !Ref 'ProtectedRouteTable2'
+          - '1'
+      SubnetId: !Join
+        - ''
+        - - !Ref 'protectedSubnet2'
+          - '1'
     Type: AWS::EC2::SubnetRouteTableAssociation
   VPC:
     Properties:
@@ -221,32 +245,6 @@ Resources:
         - Key: Name
           Value: !Ref 'AWSenv'
     Type: AWS::EC2::VPC
-  natgatway1:
-    Properties:
-      AllocationId: !GetAtt 'EIP2.AllocationId'
-      SubnetId: !Ref 'protectedSubnet2'
-      Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
-        - Key: Name
-          Value: !Join
-            - ''
-            - - !Ref 'AWSenv'
-              - -NatGW-1
-    Type: AWS::EC2::NatGateway
-  natgatway2:
-    Properties:
-      AllocationId: !GetAtt 'EIP2.AllocationId'
-      SubnetId: !Ref 'protectedSubnet2'
-      Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
-        - Key: Name
-          Value: !Join
-            - ''
-            - - !Ref 'AWSenv'
-              - -NatGW-2
-    Type: AWS::EC2::NatGateway
   privateSubnet1:
     Properties:
       AvailabilityZone: !Select

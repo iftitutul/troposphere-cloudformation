@@ -37,3 +37,11 @@ Each account should have the following multi-az subnets. The VPC IPs should besp
     - Outbound internet access via NAT
 
 Tags should be added to each resource for billing purposes. You may decide which tags to add.
+
+-------------------------
+
+### Reference:
+- https://blog.spikeseed.cloud/easy-infrastructure-as-code-with-troposphere/
+- https://github.com/cloudtools/troposphere
+- https://github.com/arhs/spikeseed-cloud-labs/tree/master/troposphere
+- https://medium.com/@it.melnichenko/python-script-with-troposphere-library-which-automatically-creates-cloudformation-template-for-you-98cc76ca72f3

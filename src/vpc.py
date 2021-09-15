@@ -177,28 +177,6 @@ route = t.add_resource(
     )
 )
 
-# Private Routing table
-privateRouteTable = t.add_resource(RouteTable(
-  "PrivateRouteTable",
-  VpcId = Ref(VPC),
-  Tags = Tags(
-            Application = ref_stack_id,
-            Name = Join("",[Ref(input_env_param),("-Private-RT")])
-        )
-  )
-)
-
-# Protected Routing table
-protectedRouteTable = t.add_resource(RouteTable(
-  "ProtectedRouteTable",
-  VpcId = Ref(VPC),
-  Tags = Tags(
-            Application = ref_stack_id,
-            Name = Join("",[Ref(input_env_param),("-Protected-RT")])
-        )
-  )
-)
-
 # Create Public Subnet
 for i in range(input_az_amount):
     public_subnet = t.add_resource(Subnet(
@@ -220,6 +198,17 @@ for i in range(input_az_amount):
     )
 )
 
+# Private Routing table
+privateRouteTable = t.add_resource(RouteTable(
+  "PrivateRouteTable",
+  VpcId = Ref(VPC),
+  Tags = Tags(
+            Application = ref_stack_id,
+            Name = Join("",[Ref(input_env_param),("-Private-RT")])
+        )
+  )
+)
+
 # Create Private Subnet
 for i in range(input_az_amount):
     private_subnet = t.add_resource(Subnet(
@@ -238,6 +227,18 @@ for i in range(input_az_amount):
         'SubnetprivateToRouteTableAttachment' + str(i+1),
         SubnetId = Ref(private_subnet),
         RouteTableId = Ref(privateRouteTable),
+        )
+)
+
+# Protected Routing table
+for i in range(input_az_amount):
+    protectedRouteTable = t.add_resource(RouteTable(
+        'ProtectedRouteTable'+ str(i+1),
+        VpcId = Ref(VPC),
+        Tags = Tags(
+                Application = ref_stack_id,
+                Name = Join("", [Ref(input_env_param),("-Protected-RT"+ str(i+1))])
+        )
     )
 )
 
@@ -245,7 +246,7 @@ for i in range(input_az_amount):
 for i in range(input_az_amount):
     protected_subnet = t.add_resource(Subnet(
         'protectedSubnet'+ str(i+1),
-        VpcId=Ref(VPC),
+        VpcId = Ref(VPC),
         AvailabilityZone = Select(i, GetAZs(Ref("AWS::Region"))),
         CidrBlock = FindInMap("AWSenvtoprotectedsubnet", Ref(input_env_param), "protectedsubnet"+ str(i+1)),
         Tags = Tags(
@@ -256,11 +257,17 @@ for i in range(input_az_amount):
 )
     
     protected_subnet_attachment = t.add_resource(SubnetRouteTableAssociation(
-        'SubnetprotectedToRouteTableAttachment' + str(i+1),
+        'SubnetprotectedToRouteTableAttachment'+ str(i+1),
         SubnetId = Ref(protected_subnet),
-        RouteTableId = Ref(protectedRouteTable),
-    )
+        RouteTableId = Ref(protectedRouteTable)
+        )
 )
+
+    # protected_subnet_attachment_2 = t.add_resource(SubnetRouteTableAssociation(
+    #     'SubnetprotectedToRouteTableAttachment' + str(2),
+    #     SubnetId = Ref('protected_subnet2'),
+    #     RouteTableId = Ref('protectedRouteTable2'),
+    # )
 
 # Create NAT EIP
 for i in range(input_az_amount):
@@ -274,18 +281,18 @@ for i in range(input_az_amount):
     )
 )
 
-# Create NAT Gateway for Protected Subnet
-for i in range(input_az_amount):
-    nat_gateway = t.add_resource(ec2.NatGateway(
-        'natgatway'+ str(i+1),
-        AllocationId = GetAtt(nat_eip,'AllocationId'),
-        SubnetId = Ref(protected_subnet),
-        Tags = Tags(
-            Application = ref_stack_id,
-            Name = Join("",[Ref(input_env_param),("-NatGW-"+ str(i+1))])
-        )
-    )
-)
+# # Create NAT Gateway for Protected Subnet
+# for i in range(input_az_amount):
+#     nat_gateway = t.add_resource(ec2.NatGateway(
+#         'natgatway'+ str(i+1),
+#         AllocationId = GetAtt(nat_eip,'AllocationId'),
+#         SubnetId = Ref(protected_subnet),
+#         Tags = Tags(
+#             Application = ref_stack_id,
+#             Name = Join("",[Ref(input_env_param),("-NatGW-"+ str(i+1))])
+#         )
+#     )
+# )
 
 
 # Finally, write the template to a file
