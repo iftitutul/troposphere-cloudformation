@@ -1,0 +1,26 @@
+Description: AWS Cloudformation For VPC Template
+Mappings:
+  AWSenvtoVPC:
+    dev:
+      vpc: 10.10.0.0/16
+    prod:
+      vpc: 10.10.2.0/16
+    staging:
+      vpc: 10.10.1.0/16
+Parameters:
+  AWSenv:
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Default: dev
+    Description: AWS Environment Type
+    Type: String
+Resources:
+  VPC:
+    Properties:
+      CidrBlock: 10.10.0.0/16
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackId'
+    Type: AWS::EC2::VPC
