@@ -12,7 +12,7 @@ python src/vpc.py
 aws cloudformation --profile <profile-name> --region <region-name> create-stack --stack-name Troposphere-vpc --template-body file://vpc.yaml
 ``` 
 
-# Create Stack with Parameters
+### Create Stack with Parameters
 ```
 aws cloudformation --profile <profile-name> --region <region-name> create-stack --stack-name Troposphere-vpc --template-body file://vpc.yaml --parameters ParameterKey=AWSenv,ParameterValue=Growth-Prod
 ``` 
@@ -22,7 +22,7 @@ aws cloudformation --profile <profile-name> --region <region-name> create-stack 
 aws cloudformation --profile <profile-name> --region <region-name> update-stack --stack-name Troposphere-vpc --template-body file://vpc.yaml
 ```
 
-# Update Stack with Parameters
+### Update Stack with Parameters
 ```
 aws cloudformation --profile <profile-name> --region <region-name> update-stack --stack-name Troposphere-vpc --template-body file://vpc.yaml --parameters ParameterKey=AWSenv,ParameterValue=Growth-Prod
 ``` 
