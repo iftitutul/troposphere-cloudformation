@@ -52,8 +52,8 @@ t.add_mapping(
     "AWSenvtoVPC",
     {
         "Growth-Dev": {"vpc": "10.0.0.0/24"},
-        "Growth-Stage": {"vpc": "10.1.0.0/25"},
-        "Growth-Prod": {"vpc": "10.2.0.0/25"},
+        "Growth-Stage": {"vpc": "10.1.0.0/18"},
+        "Growth-Prod": {"vpc": "10.2.0.0/18"},
     },
 )
 
@@ -65,12 +65,12 @@ t.add_mapping(
             "pubsubnet2": "10.0.0.16/28",
         },
         "Growth-Stage": {
-            "pubsubnet1": "10.1.0.0/28",
-            "pubsubnet2": "10.1.0.16/28",
+            "pubsubnet1": "10.1.1.0/24",
+            "pubsubnet2": "10.1.2.0/24",
         },
         "Growth-Prod": {
-            "pubsubnet1": "10.2.0.0/28",
-            "pubsubnet2": "10.2.0.16/28",
+            "pubsubnet1": "10.2.1.0/24",
+            "pubsubnet2": "10.2.2.0/24",
         },
     }
 )
@@ -83,12 +83,12 @@ t.add_mapping(
             "pvtsubnet2": "10.0.0.48/28",
         },
         "Growth-Stage": {
-            "pvtsubnet1": "10.1.0.32/28",
-            "pvtsubnet2": "10.1.0.48/28",
+            "pvtsubnet1": "10.1.3.0/24",
+            "pvtsubnet2": "10.1.4.0/24",
         },
         "Growth-Prod": {
-            "pvtsubnet1": "10.2.0.32/28",
-            "pvtsubnet2": "10.2.0.48/28",
+            "pvtsubnet1": "10.2.3.0/24",
+            "pvtsubnet2": "10.2.4.0/24",
         },
     }
 )
@@ -101,12 +101,12 @@ t.add_mapping(
             "protectedsubnet2": "10.0.0.80/28",
         },
         "Growth-Stage": {
-            "protectedsubnet1": "10.1.0.64/28",
-            "protectedsubnet2": "10.1.0.80/28",
+            "protectedsubnet1": "10.1.5.0/24",
+            "protectedsubnet2": "10.1.6.0/24",
         },
         "Growth-Prod": {
-            "protectedsubnet1": "10.2.0.64/28",
-            "protectedsubnet2": "10.2.0.80/28",
+            "protectedsubnet1": "10.2.5.0/24",
+            "protectedsubnet2": "10.2.6.0/24",
         },
     }
 )
