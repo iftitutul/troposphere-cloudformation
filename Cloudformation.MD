@@ -9,15 +9,25 @@ python src/vpc.py
 
 ### Create Stack
 ```
-aws cloudformation --profile ax-test create-stack --stack-name Troposphere-vpc --template-body file://vpc.yaml
+aws cloudformation --profile <profile-name> --region <region-name> create-stack --stack-name Troposphere-vpc --template-body file://vpc.yaml
+``` 
+
+# Create Stack with Parameters
+```
+aws cloudformation --profile <profile-name> --region <region-name> create-stack --stack-name Troposphere-vpc --template-body file://vpc.yaml --parameters ParameterKey=AWSenv,ParameterValue=Growth-Prod
 ``` 
  
 ### Update Stack
 ```
-aws cloudformation --profile ax-test update-stack --stack-name Troposphere-vpc --template-body file://vpc.yaml
+aws cloudformation --profile <profile-name> --region <region-name> update-stack --stack-name Troposphere-vpc --template-body file://vpc.yaml
 ```
+
+# Update Stack with Parameters
+```
+aws cloudformation --profile <profile-name> --region <region-name> update-stack --stack-name Troposphere-vpc --template-body file://vpc.yaml --parameters ParameterKey=AWSenv,ParameterValue=Growth-Prod
+``` 
 
 ### Delete Stack
 ```
-aws cloudformation --profile ax-test update-stack --stack-name Troposphere-vpc
+aws cloudformation --profile <profile-name> --region <region-name> update-stack --stack-name Troposphere-vpc
 ```

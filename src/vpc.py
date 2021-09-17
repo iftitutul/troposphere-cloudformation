@@ -10,13 +10,13 @@ from troposphere import (
     Select,
     GetAZs,
     GetAtt,
+    Cidr,
 )
 
 from troposphere.ec2 import (
     VPC,
     InternetGateway,
-    NetworkAcl,
-    NetworkAclEntry,
+    NatGateway,
     Route,
     RouteTable,
     Subnet,
@@ -30,8 +30,9 @@ t = Template()
 t.set_description("AWS Cloudformation For VPC Template")
 
 # User Input
-input_az_amount = int(input('In how many different AZs you want to create subnets? (max. 3): '))
-# #input_pri_az_amount = int(input('In how many different AZs you want to create PRIVATE subnets? (max. 3): '))
+#input_az_amount = int(input('In how many different AZs you want to create subnets? (max. ): '))
+input_az_amount = 2
+
 
 input_env_param = t.add_parameter(
     Parameter(
@@ -60,19 +61,16 @@ t.add_mapping(
     "AWSenvtopubsubnet",
     {
         "Growth-Dev": {
-            "pubsubnet1": "10.0.0.16/28",
-            "pubsubnet2": "10.0.0.32/28",
-            "pubsubnet3": "10.0.0.48/28",
+            "pubsubnet1": "10.0.0.0/28",
+            "pubsubnet2": "10.0.0.16/28",
         },
         "Growth-Stage": {
-            "pubsubnet1": "10.1.0.16/28",
-            "pubsubnet2": "10.1.0.32/28",
-            "pubsubnet3": "10.1.0.48/28",
+            "pubsubnet1": "10.1.0.0/28",
+            "pubsubnet2": "10.1.0.16/28",
         },
         "Growth-Prod": {
-            "pubsubnet1": "10.2.0.16/28",
-            "pubsubnet2": "10.2.0.32/28",
-            "pubsubnet3": "10.2.0.48/28",
+            "pubsubnet1": "10.2.0.0/28",
+            "pubsubnet2": "10.2.0.16/28",
         },
     }
 )
@@ -81,19 +79,16 @@ t.add_mapping(
     "AWSenvtoprivatesubnet",
     {
         "Growth-Dev": {
-            "pvtsubnet1": "10.0.0.64/28",
-            "pvtsubnet2": "10.0.0.80/28",
-            "pvtsubnet3": "10.0.0.96/28",
+            "pvtsubnet1": "10.0.0.32/28",
+            "pvtsubnet2": "10.0.0.48/28",
         },
         "Growth-Stage": {
-            "pvtsubnet1": "10.1.0.64/28",
-            "pvtsubnet2": "10.1.0.80/28",
-            "pvtsubnet3": "10.1.0.96/28",
+            "pvtsubnet1": "10.1.0.32/28",
+            "pvtsubnet2": "10.1.0.48/28",
         },
         "Growth-Prod": {
-            "pvtsubnet1": "10.2.0.64/28",
-            "pvtsubnet2": "10.2.0.80/28",
-            "pvtsubnet3": "10.2.0.96/28",
+            "pvtsubnet1": "10.2.0.32/28",
+            "pvtsubnet2": "10.2.0.48/28",
         },
     }
 )
@@ -102,19 +97,32 @@ t.add_mapping(
     "AWSenvtoprotectedsubnet",
     {
         "Growth-Dev": {
-            "protectedsubnet1": "10.0.0.112/28",
-            "protectedsubnet2": "10.0.0.128/28",
-            "protectedsubnet3": "10.0.0.144/28",
+            "protectedsubnet1": "10.0.0.64/28",
+            "protectedsubnet2": "10.0.0.80/28",
         },
         "Growth-Stage": {
-            "protectedsubnet1": "10.1.0.112/28",
-            "protectedsubnet2": "10.1.0.128/28",
-            "protectedsubnet3": "10.1.0.144/28",
+            "protectedsubnet1": "10.1.0.64/28",
+            "protectedsubnet2": "10.1.0.80/28",
         },
         "Growth-Prod": {
-            "protectedsubnet1": "10.2.0.112/28",
-            "protectedsubnet2": "10.2.0.128/28",
-            "protectedsubnet3": "10.2.0.144/28",
+            "protectedsubnet1": "10.2.0.64/28",
+            "protectedsubnet2": "10.2.0.80/28",
+        },
+    }
+)
+
+t.add_mapping(
+    "AWSenvtoVPCdns",
+    {
+        "Growth-Dev": {
+            "dnshostnamesenabled": "False",
+        },
+        "Growth-Stage": {
+            "dnshostnamesenabled": "True",
+    
+        },
+        "Growth-Prod": {
+            "dnshostnamesenabled": "True",
         },
     }
 )
@@ -127,6 +135,8 @@ VPC = t.add_resource(
     VPC(
         'VPC', 
         CidrBlock = FindInMap('AWSenvtoVPC', Ref(input_env_param), 'vpc'),
+        EnableDnsSupport = True,
+        EnableDnsHostnames = FindInMap('AWSenvtoVPCdns', Ref(input_env_param), 'dnshostnamesenabled'),
         Tags = Tags(
             Application = ref_stack_id,
             Name = Ref(input_env_param)
@@ -184,6 +194,7 @@ for i in range(input_az_amount):
         VpcId=Ref(VPC),
         AvailabilityZone = Select(i, GetAZs(Ref("AWS::Region"))),
         CidrBlock = FindInMap("AWSenvtopubsubnet", Ref(input_env_param), "pubsubnet"+ str(i+1)),
+        #CidrBlock = Select(i+4, Cidr(GetAtt(VPC, 'CidrBlock'), 16, 8)),
         Tags = Tags(
                 Application = ref_stack_id,
                 Name = Join("",[Ref(input_env_param),("-PublicSubnet"+ str(i+1))])
@@ -216,6 +227,7 @@ for i in range(input_az_amount):
         VpcId=Ref(VPC),
         AvailabilityZone = Select(i, GetAZs(Ref("AWS::Region"))),
         CidrBlock = FindInMap("AWSenvtoprivatesubnet", Ref(input_env_param), "pvtsubnet"+ str(i+1)),
+        #CidrBlock = Select(i+4, Cidr(GetAtt(VPC, 'CidrBlock'), 16, 8)),
         Tags = Tags(
                 Application = ref_stack_id,
                 Name = Join("",[Ref(input_env_param),("-pvtSubnet"+ str(i+1))])
@@ -230,8 +242,22 @@ for i in range(input_az_amount):
         )
 )
 
-# Protected Routing table
+# Create protected Subnet
 for i in range(input_az_amount):
+    protected_subnet = t.add_resource(Subnet(
+        'protectedSubnet'+ str(i+1),
+        VpcId = Ref(VPC),
+        AvailabilityZone = Select(i, GetAZs(Ref("AWS::Region"))),
+        CidrBlock = FindInMap("AWSenvtoprotectedsubnet", Ref(input_env_param), "protectedsubnet"+ str(i+1)),
+        #CidrBlock = Select(i+4, Cidr(GetAtt(VPC, 'CidrBlock'), 16, 8)),
+        Tags = Tags(
+                Application = ref_stack_id,
+                Name = Join("",[Ref(input_env_param),("-protectedSubnet"+ str(i+1))])
+        ) 
+    )
+)
+
+    # Protected Routing table   
     protectedRouteTable = t.add_resource(RouteTable(
         'ProtectedRouteTable'+ str(i+1),
         VpcId = Ref(VPC),
@@ -242,35 +268,14 @@ for i in range(input_az_amount):
     )
 )
 
-# Create protected Subnet
-for i in range(input_az_amount):
-    protected_subnet = t.add_resource(Subnet(
-        'protectedSubnet'+ str(i+1),
-        VpcId = Ref(VPC),
-        AvailabilityZone = Select(i, GetAZs(Ref("AWS::Region"))),
-        CidrBlock = FindInMap("AWSenvtoprotectedsubnet", Ref(input_env_param), "protectedsubnet"+ str(i+1)),
-        Tags = Tags(
-                Application = ref_stack_id,
-                Name = Join("",[Ref(input_env_param),("-protectedSubnet"+ str(i+1))])
-        ) 
-    )
-)
-    
     protected_subnet_attachment = t.add_resource(SubnetRouteTableAssociation(
         'SubnetprotectedToRouteTableAttachment'+ str(i+1),
         SubnetId = Ref(protected_subnet),
         RouteTableId = Ref(protectedRouteTable)
-        )
+    )
 )
 
-    # protected_subnet_attachment_2 = t.add_resource(SubnetRouteTableAssociation(
-    #     'SubnetprotectedToRouteTableAttachment' + str(2),
-    #     SubnetId = Ref('protected_subnet2'),
-    #     RouteTableId = Ref('protectedRouteTable2'),
-    # )
-
-# Create NAT EIP
-for i in range(input_az_amount):
+    # Create NAT EIP
     nat_eip = t.add_resource(ec2.EIP(
         'EIP' + str(i+1),
         Domain="vpc",
@@ -281,19 +286,27 @@ for i in range(input_az_amount):
     )
 )
 
-# # Create NAT Gateway for Protected Subnet
-# for i in range(input_az_amount):
-#     nat_gateway = t.add_resource(ec2.NatGateway(
-#         'natgatway'+ str(i+1),
-#         AllocationId = GetAtt(nat_eip,'AllocationId'),
-#         SubnetId = Ref(protected_subnet),
-#         Tags = Tags(
-#             Application = ref_stack_id,
-#             Name = Join("",[Ref(input_env_param),("-NatGW-"+ str(i+1))])
-#         )
-#     )
-# )
+    # Create NAT Gateway for Protected Subnet
+    nat_gateway = t.add_resource(ec2.NatGateway(
+        'natgatway'+ str(i+1),
+        AllocationId = GetAtt(nat_eip,'AllocationId'),
+        SubnetId = Ref(protected_subnet),
+        Tags = Tags(
+            Application = ref_stack_id,
+            Name = Join("",[Ref(input_env_param),("-NatGW-"+ str(i+1))])
+        )
+    )
+)
 
+    #Create default route 0.0.0.0/0 in the Nat RouteTable
+    nat_route = t.add_resource(Route(
+            'natRoute' + str(i+1),
+            DependsOn = nat_gateway,
+            NatGatewayId = Ref(nat_gateway),
+            DestinationCidrBlock = '0.0.0.0/0',
+            RouteTableId = Ref(protectedRouteTable),
+    )
+)
 
 # Finally, write the template to a file
 with open('./vpc.yaml', 'w') as f:

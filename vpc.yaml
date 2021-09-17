@@ -7,45 +7,43 @@ Mappings:
       vpc: 10.2.0.0/25
     Growth-Stage:
       vpc: 10.1.0.0/25
+  AWSenvtoVPCdns:
+    Growth-Dev:
+      dnshostnamesenabled: 'False'
+    Growth-Prod:
+      dnshostnamesenabled: 'True'
+    Growth-Stage:
+      dnshostnamesenabled: 'True'
   AWSenvtoprivatesubnet:
     Growth-Dev:
-      pvtsubnet1: 10.0.0.64/28
-      pvtsubnet2: 10.0.0.80/28
-      pvtsubnet3: 10.0.0.96/28
+      pvtsubnet1: 10.0.0.32/28
+      pvtsubnet2: 10.0.0.48/28
     Growth-Prod:
-      pvtsubnet1: 10.2.0.64/28
-      pvtsubnet2: 10.2.0.80/28
-      pvtsubnet3: 10.2.0.96/28
+      pvtsubnet1: 10.2.0.32/28
+      pvtsubnet2: 10.2.0.48/28
     Growth-Stage:
-      pvtsubnet1: 10.1.0.64/28
-      pvtsubnet2: 10.1.0.80/28
-      pvtsubnet3: 10.1.0.96/28
+      pvtsubnet1: 10.1.0.32/28
+      pvtsubnet2: 10.1.0.48/28
   AWSenvtoprotectedsubnet:
     Growth-Dev:
-      protectedsubnet1: 10.0.0.112/28
-      protectedsubnet2: 10.0.0.128/28
-      protectedsubnet3: 10.0.0.144/28
+      protectedsubnet1: 10.0.0.64/28
+      protectedsubnet2: 10.0.0.80/28
     Growth-Prod:
-      protectedsubnet1: 10.2.0.112/28
-      protectedsubnet2: 10.2.0.128/28
-      protectedsubnet3: 10.2.0.144/28
+      protectedsubnet1: 10.2.0.64/28
+      protectedsubnet2: 10.2.0.80/28
     Growth-Stage:
-      protectedsubnet1: 10.1.0.112/28
-      protectedsubnet2: 10.1.0.128/28
-      protectedsubnet3: 10.1.0.144/28
+      protectedsubnet1: 10.1.0.64/28
+      protectedsubnet2: 10.1.0.80/28
   AWSenvtopubsubnet:
     Growth-Dev:
-      pubsubnet1: 10.0.0.16/28
-      pubsubnet2: 10.0.0.32/28
-      pubsubnet3: 10.0.0.48/28
+      pubsubnet1: 10.0.0.0/28
+      pubsubnet2: 10.0.0.16/28
     Growth-Prod:
-      pubsubnet1: 10.2.0.16/28
-      pubsubnet2: 10.2.0.32/28
-      pubsubnet3: 10.2.0.48/28
+      pubsubnet1: 10.2.0.0/28
+      pubsubnet2: 10.2.0.16/28
     Growth-Stage:
-      pubsubnet1: 10.1.0.16/28
-      pubsubnet2: 10.1.0.32/28
-      pubsubnet3: 10.1.0.48/28
+      pubsubnet1: 10.1.0.0/28
+      pubsubnet2: 10.1.0.16/28
 Parameters:
   AWSenv:
     AllowedValues:
@@ -213,25 +211,13 @@ Resources:
     Type: AWS::EC2::SubnetRouteTableAssociation
   SubnetprotectedToRouteTableAttachment1:
     Properties:
-      RouteTableId: !Join
-        - ''
-        - - !Ref 'ProtectedRouteTable2'
-          - '0'
-      SubnetId: !Join
-        - ''
-        - - !Ref 'protectedSubnet1'
-          - '0'
+      RouteTableId: !Ref 'ProtectedRouteTable1'
+      SubnetId: !Ref 'protectedSubnet1'
     Type: AWS::EC2::SubnetRouteTableAssociation
   SubnetprotectedToRouteTableAttachment2:
     Properties:
-      RouteTableId: !Join
-        - ''
-        - - !Ref 'ProtectedRouteTable2'
-          - '1'
-      SubnetId: !Join
-        - ''
-        - - !Ref 'protectedSubnet2'
-          - '1'
+      RouteTableId: !Ref 'ProtectedRouteTable2'
+      SubnetId: !Ref 'protectedSubnet2'
     Type: AWS::EC2::SubnetRouteTableAssociation
   VPC:
     Properties:
@@ -239,12 +225,57 @@ Resources:
         - AWSenvtoVPC
         - !Ref 'AWSenv'
         - vpc
+      EnableDnsHostnames: !FindInMap
+        - AWSenvtoVPCdns
+        - !Ref 'AWSenv'
+        - dnshostnamesenabled
+      EnableDnsSupport: true
       Tags:
         - Key: Application
           Value: !Ref 'AWS::StackId'
         - Key: Name
           Value: !Ref 'AWSenv'
     Type: AWS::EC2::VPC
+  natRoute1:
+    DependsOn: natgatway1
+    Properties:
+      DestinationCidrBlock: '0.0.0.0/0'
+      NatGatewayId: !Ref 'natgatway1'
+      RouteTableId: !Ref 'ProtectedRouteTable1'
+    Type: AWS::EC2::Route
+  natRoute2:
+    DependsOn: natgatway2
+    Properties:
+      DestinationCidrBlock: '0.0.0.0/0'
+      NatGatewayId: !Ref 'natgatway2'
+      RouteTableId: !Ref 'ProtectedRouteTable2'
+    Type: AWS::EC2::Route
+  natgatway1:
+    Properties:
+      AllocationId: !GetAtt 'EIP1.AllocationId'
+      SubnetId: !Ref 'protectedSubnet1'
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackId'
+        - Key: Name
+          Value: !Join
+            - ''
+            - - !Ref 'AWSenv'
+              - -NatGW-1
+    Type: AWS::EC2::NatGateway
+  natgatway2:
+    Properties:
+      AllocationId: !GetAtt 'EIP2.AllocationId'
+      SubnetId: !Ref 'protectedSubnet2'
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackId'
+        - Key: Name
+          Value: !Join
+            - ''
+            - - !Ref 'AWSenv'
+              - -NatGW-2
+    Type: AWS::EC2::NatGateway
   privateSubnet1:
     Properties:
       AvailabilityZone: !Select
