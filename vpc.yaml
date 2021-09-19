@@ -4,9 +4,19 @@ Mappings:
     Growth-Dev:
       vpc: 10.0.0.0/24
     Growth-Prod:
-      vpc: 10.2.0.0/25
+      vpc: 10.2.0.0/18
     Growth-Stage:
-      vpc: 10.1.0.0/25
+      vpc: 10.1.0.0/18
+  AWSenvtoVPCcidrblock:
+    Growth-Dev:
+      cidrblockhost: '16'
+      cidrblocksubnet: '4'
+    Growth-Prod:
+      cidrblockhost: '16'
+      cidrblocksubnet: '8'
+    Growth-Stage:
+      cidrblockhost: '16'
+      cidrblocksubnet: '8'
   AWSenvtoVPCdns:
     Growth-Dev:
       dnshostnamesenabled: 'False'
@@ -14,36 +24,6 @@ Mappings:
       dnshostnamesenabled: 'True'
     Growth-Stage:
       dnshostnamesenabled: 'True'
-  AWSenvtoprivatesubnet:
-    Growth-Dev:
-      pvtsubnet1: 10.0.0.32/28
-      pvtsubnet2: 10.0.0.48/28
-    Growth-Prod:
-      pvtsubnet1: 10.2.0.32/28
-      pvtsubnet2: 10.2.0.48/28
-    Growth-Stage:
-      pvtsubnet1: 10.1.0.32/28
-      pvtsubnet2: 10.1.0.48/28
-  AWSenvtoprotectedsubnet:
-    Growth-Dev:
-      protectedsubnet1: 10.0.0.64/28
-      protectedsubnet2: 10.0.0.80/28
-    Growth-Prod:
-      protectedsubnet1: 10.2.0.64/28
-      protectedsubnet2: 10.2.0.80/28
-    Growth-Stage:
-      protectedsubnet1: 10.1.0.64/28
-      protectedsubnet2: 10.1.0.80/28
-  AWSenvtopubsubnet:
-    Growth-Dev:
-      pubsubnet1: 10.0.0.0/28
-      pubsubnet2: 10.0.0.16/28
-    Growth-Prod:
-      pubsubnet1: 10.2.0.0/28
-      pubsubnet2: 10.2.0.16/28
-    Growth-Stage:
-      pubsubnet1: 10.1.0.0/28
-      pubsubnet2: 10.1.0.16/28
 Parameters:
   AWSenv:
     AllowedValues:
@@ -63,8 +43,8 @@ Resources:
     Properties:
       Domain: vpc
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
@@ -75,19 +55,31 @@ Resources:
     Properties:
       Domain: vpc
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
             - - !Ref 'AWSenv'
               - -NatGW-EIP-2
     Type: AWS::EC2::EIP
+  EIP3:
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Environment
+          Value: !Ref 'AWSenv'
+        - Key: Name
+          Value: !Join
+            - ''
+            - - !Ref 'AWSenv'
+              - -NatGW-EIP-3
+    Type: AWS::EC2::EIP
   InternetGateway:
     Properties:
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
@@ -97,8 +89,8 @@ Resources:
   MainRouteTable:
     Properties:
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
@@ -109,8 +101,8 @@ Resources:
   PrivateRouteTable:
     Properties:
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
@@ -121,8 +113,8 @@ Resources:
   ProtectedRouteTable1:
     Properties:
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
@@ -133,13 +125,25 @@ Resources:
   ProtectedRouteTable2:
     Properties:
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
             - - !Ref 'AWSenv'
               - -Protected-RT2
+      VpcId: !Ref 'VPC'
+    Type: AWS::EC2::RouteTable
+  ProtectedRouteTable3:
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: !Ref 'AWSenv'
+        - Key: Name
+          Value: !Join
+            - ''
+            - - !Ref 'AWSenv'
+              - -Protected-RT3
       VpcId: !Ref 'VPC'
     Type: AWS::EC2::RouteTable
   PublicSubnet1:
@@ -148,13 +152,21 @@ Resources:
         - 0
         - !GetAZs
           Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - AWSenvtopubsubnet
-        - !Ref 'AWSenv'
-        - pubsubnet1
+      CidrBlock: !Select
+        - 0
+        - !Cidr
+          - !GetAtt 'VPC.CidrBlock'
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblockhost
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblocksubnet
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
@@ -168,18 +180,54 @@ Resources:
         - 1
         - !GetAZs
           Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - AWSenvtopubsubnet
-        - !Ref 'AWSenv'
-        - pubsubnet2
+      CidrBlock: !Select
+        - 1
+        - !Cidr
+          - !GetAtt 'VPC.CidrBlock'
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblockhost
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblocksubnet
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
             - - !Ref 'AWSenv'
               - -PublicSubnet2
+      VpcId: !Ref 'VPC'
+    Type: AWS::EC2::Subnet
+  PublicSubnet3:
+    Properties:
+      AvailabilityZone: !Select
+        - 2
+        - !GetAZs
+          Ref: AWS::Region
+      CidrBlock: !Select
+        - 2
+        - !Cidr
+          - !GetAtt 'VPC.CidrBlock'
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblockhost
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblocksubnet
+      Tags:
+        - Key: Environment
+          Value: !Ref 'AWSenv'
+        - Key: Name
+          Value: !Join
+            - ''
+            - - !Ref 'AWSenv'
+              - -PublicSubnet3
       VpcId: !Ref 'VPC'
     Type: AWS::EC2::Subnet
   Route:
@@ -199,6 +247,11 @@ Resources:
       RouteTableId: !Ref 'MainRouteTable'
       SubnetId: !Ref 'PublicSubnet2'
     Type: AWS::EC2::SubnetRouteTableAssociation
+  SubnetPublicToRouteTableAttachment3:
+    Properties:
+      RouteTableId: !Ref 'MainRouteTable'
+      SubnetId: !Ref 'PublicSubnet3'
+    Type: AWS::EC2::SubnetRouteTableAssociation
   SubnetprivateToRouteTableAttachment1:
     Properties:
       RouteTableId: !Ref 'PrivateRouteTable'
@@ -209,6 +262,11 @@ Resources:
       RouteTableId: !Ref 'PrivateRouteTable'
       SubnetId: !Ref 'privateSubnet2'
     Type: AWS::EC2::SubnetRouteTableAssociation
+  SubnetprivateToRouteTableAttachment3:
+    Properties:
+      RouteTableId: !Ref 'PrivateRouteTable'
+      SubnetId: !Ref 'privateSubnet3'
+    Type: AWS::EC2::SubnetRouteTableAssociation
   SubnetprotectedToRouteTableAttachment1:
     Properties:
       RouteTableId: !Ref 'ProtectedRouteTable1'
@@ -218,6 +276,11 @@ Resources:
     Properties:
       RouteTableId: !Ref 'ProtectedRouteTable2'
       SubnetId: !Ref 'protectedSubnet2'
+    Type: AWS::EC2::SubnetRouteTableAssociation
+  SubnetprotectedToRouteTableAttachment3:
+    Properties:
+      RouteTableId: !Ref 'ProtectedRouteTable3'
+      SubnetId: !Ref 'protectedSubnet3'
     Type: AWS::EC2::SubnetRouteTableAssociation
   VPC:
     Properties:
@@ -231,8 +294,8 @@ Resources:
         - dnshostnamesenabled
       EnableDnsSupport: true
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Ref 'AWSenv'
     Type: AWS::EC2::VPC
@@ -250,13 +313,20 @@ Resources:
       NatGatewayId: !Ref 'natgatway2'
       RouteTableId: !Ref 'ProtectedRouteTable2'
     Type: AWS::EC2::Route
+  natRoute3:
+    DependsOn: natgatway3
+    Properties:
+      DestinationCidrBlock: '0.0.0.0/0'
+      NatGatewayId: !Ref 'natgatway3'
+      RouteTableId: !Ref 'ProtectedRouteTable3'
+    Type: AWS::EC2::Route
   natgatway1:
     Properties:
       AllocationId: !GetAtt 'EIP1.AllocationId'
       SubnetId: !Ref 'protectedSubnet1'
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
@@ -268,13 +338,26 @@ Resources:
       AllocationId: !GetAtt 'EIP2.AllocationId'
       SubnetId: !Ref 'protectedSubnet2'
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
             - - !Ref 'AWSenv'
               - -NatGW-2
+    Type: AWS::EC2::NatGateway
+  natgatway3:
+    Properties:
+      AllocationId: !GetAtt 'EIP3.AllocationId'
+      SubnetId: !Ref 'protectedSubnet3'
+      Tags:
+        - Key: Environment
+          Value: !Ref 'AWSenv'
+        - Key: Name
+          Value: !Join
+            - ''
+            - - !Ref 'AWSenv'
+              - -NatGW-3
     Type: AWS::EC2::NatGateway
   privateSubnet1:
     Properties:
@@ -282,13 +365,21 @@ Resources:
         - 0
         - !GetAZs
           Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - AWSenvtoprivatesubnet
-        - !Ref 'AWSenv'
-        - pvtsubnet1
+      CidrBlock: !Select
+        - 4
+        - !Cidr
+          - !GetAtt 'VPC.CidrBlock'
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblockhost
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblocksubnet
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
@@ -302,18 +393,54 @@ Resources:
         - 1
         - !GetAZs
           Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - AWSenvtoprivatesubnet
-        - !Ref 'AWSenv'
-        - pvtsubnet2
+      CidrBlock: !Select
+        - 5
+        - !Cidr
+          - !GetAtt 'VPC.CidrBlock'
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblockhost
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblocksubnet
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
             - - !Ref 'AWSenv'
               - -pvtSubnet2
+      VpcId: !Ref 'VPC'
+    Type: AWS::EC2::Subnet
+  privateSubnet3:
+    Properties:
+      AvailabilityZone: !Select
+        - 2
+        - !GetAZs
+          Ref: AWS::Region
+      CidrBlock: !Select
+        - 6
+        - !Cidr
+          - !GetAtt 'VPC.CidrBlock'
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblockhost
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblocksubnet
+      Tags:
+        - Key: Environment
+          Value: !Ref 'AWSenv'
+        - Key: Name
+          Value: !Join
+            - ''
+            - - !Ref 'AWSenv'
+              - -pvtSubnet3
       VpcId: !Ref 'VPC'
     Type: AWS::EC2::Subnet
   protectedSubnet1:
@@ -322,13 +449,21 @@ Resources:
         - 0
         - !GetAZs
           Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - AWSenvtoprotectedsubnet
-        - !Ref 'AWSenv'
-        - protectedsubnet1
+      CidrBlock: !Select
+        - 8
+        - !Cidr
+          - !GetAtt 'VPC.CidrBlock'
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblockhost
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblocksubnet
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
@@ -342,17 +477,53 @@ Resources:
         - 1
         - !GetAZs
           Ref: AWS::Region
-      CidrBlock: !FindInMap
-        - AWSenvtoprotectedsubnet
-        - !Ref 'AWSenv'
-        - protectedsubnet2
+      CidrBlock: !Select
+        - 9
+        - !Cidr
+          - !GetAtt 'VPC.CidrBlock'
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblockhost
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblocksubnet
       Tags:
-        - Key: Application
-          Value: !Ref 'AWS::StackId'
+        - Key: Environment
+          Value: !Ref 'AWSenv'
         - Key: Name
           Value: !Join
             - ''
             - - !Ref 'AWSenv'
               - -protectedSubnet2
+      VpcId: !Ref 'VPC'
+    Type: AWS::EC2::Subnet
+  protectedSubnet3:
+    Properties:
+      AvailabilityZone: !Select
+        - 2
+        - !GetAZs
+          Ref: AWS::Region
+      CidrBlock: !Select
+        - 10
+        - !Cidr
+          - !GetAtt 'VPC.CidrBlock'
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblockhost
+          - !FindInMap
+            - AWSenvtoVPCcidrblock
+            - !Ref 'AWSenv'
+            - cidrblocksubnet
+      Tags:
+        - Key: Environment
+          Value: !Ref 'AWSenv'
+        - Key: Name
+          Value: !Join
+            - ''
+            - - !Ref 'AWSenv'
+              - -protectedSubnet3
       VpcId: !Ref 'VPC'
     Type: AWS::EC2::Subnet
