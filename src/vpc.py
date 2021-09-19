@@ -11,6 +11,7 @@ from troposphere import (
     GetAZs,
     GetAtt,
     Cidr,
+    Output,
 )
 
 from troposphere.ec2 import (
@@ -337,6 +338,62 @@ for i in range(input_az_amount):
             RouteTableId = Ref(protectedRouteTable),
     )
 )
+
+# Outputs
+
+for i in range(input_az_amount):
+    t.add_output([
+        Output(
+            "NatGW" + str(i+1),
+            Value = Ref(nat_gateway)
+        ),
+        
+        Output(
+            "PubSubnet" + str(i+1),
+            Value = Ref(public_subnet)
+        ),
+
+        Output(
+            "PvtSubnet" + str(i+1),
+            Value = Ref(public_subnet)
+        ),
+
+        Output(
+            "ProtectedSubnet" + str(i+1),
+            Value = Ref(protected_subnet)
+        ),
+
+        Output(
+            "PublicRT" + str(i+1),
+            Value = Ref(mainRouteTable)
+        ),
+
+        Output(
+            "PvtRT" + str(i+1),
+            Value = Ref(privateRouteTable)
+        ),
+
+        Output(
+            "ProtectedRT" + str(i+1),
+            Value = Ref(protectedRouteTable)
+        ),
+
+    ])
+    
+
+t.add_output(
+    [
+        Output(
+            "VPCID",
+            Value = Ref(VPC)
+        ),
+        Output(
+            "InternetGW",
+            Value = Ref(internetGateway)
+        )
+    ]
+)
+
 
 # Finally, write the template to a file
 with open('./vpc.yaml', 'w') as f:

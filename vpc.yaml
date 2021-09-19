@@ -24,6 +24,53 @@ Mappings:
       dnshostnamesenabled: 'True'
     Growth-Stage:
       dnshostnamesenabled: 'True'
+Outputs:
+  InternetGW:
+    Value: !Ref 'InternetGateway'
+  NatGW1:
+    Value: !Ref 'natgatway3'
+  NatGW2:
+    Value: !Ref 'natgatway3'
+  NatGW3:
+    Value: !Ref 'natgatway3'
+  ProtectedRT1:
+    Value: !Ref 'ProtectedRouteTable3'
+  ProtectedRT2:
+    Value: !Ref 'ProtectedRouteTable3'
+  ProtectedRT3:
+    Value: !Ref 'ProtectedRouteTable3'
+  ProtectedSubnet1:
+    Value: !Ref 'protectedSubnet3'
+  ProtectedSubnet2:
+    Value: !Ref 'protectedSubnet3'
+  ProtectedSubnet3:
+    Value: !Ref 'protectedSubnet3'
+  PubSubnet1:
+    Value: !Ref 'PublicSubnet3'
+  PubSubnet2:
+    Value: !Ref 'PublicSubnet3'
+  PubSubnet3:
+    Value: !Ref 'PublicSubnet3'
+  PublicRT1:
+    Value: !Ref 'MainRouteTable'
+  PublicRT2:
+    Value: !Ref 'MainRouteTable'
+  PublicRT3:
+    Value: !Ref 'MainRouteTable'
+  PvtRT1:
+    Value: !Ref 'PrivateRouteTable'
+  PvtRT2:
+    Value: !Ref 'PrivateRouteTable'
+  PvtRT3:
+    Value: !Ref 'PrivateRouteTable'
+  PvtSubnet1:
+    Value: !Ref 'PublicSubnet3'
+  PvtSubnet2:
+    Value: !Ref 'PublicSubnet3'
+  PvtSubnet3:
+    Value: !Ref 'PublicSubnet3'
+  VPCID:
+    Value: !Ref 'VPC'
 Parameters:
   AWSenv:
     AllowedValues:

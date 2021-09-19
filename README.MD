@@ -44,4 +44,5 @@ Tags should be added to each resource for billing purposes. You may decide which
 - https://blog.spikeseed.cloud/easy-infrastructure-as-code-with-troposphere/
 - https://github.com/cloudtools/troposphere
 - https://github.com/arhs/spikeseed-cloud-labs/tree/master/troposphere
+- https://github.com/dsouzajude/troposphere-demo
 - https://medium.com/@it.melnichenko/python-script-with-troposphere-library-which-automatically-creates-cloudformation-template-for-you-98cc76ca72f3
